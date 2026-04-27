@@ -385,28 +385,44 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget> extends State
     Platform.isAndroid ? _showMaterialBottomSheet(children) : _showCupertinoModalBottomSheet(children);
   }
 
-  void _showCupertinoModalBottomSheet(List<Widget> children) {
-    showCupertinoModalPopup<void>(
-      barrierColor: Colors.transparent,
-      context: context,
-      useRootNavigator: betterPlayerController?.betterPlayerConfiguration.useRootNavigator ?? false,
-      builder: (context) => SafeArea(
+void _showCupertinoModalBottomSheet(List<Widget> children) {
+  showCupertinoModalPopup<void>(
+    barrierColor: Colors.transparent,
+    context: context,
+    useRootNavigator:
+        betterPlayerController?.betterPlayerConfiguration.useRootNavigator ??
+            false,
+    builder: (context) {
+      // ✅ Get the shortest side — works correctly in landscape on iOS
+      final double maxHeight =
+          MediaQuery.of(context).size.shortestSide * 0.85;
+
+      return SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            decoration: BoxDecoration(
-              color: betterPlayerControlsConfiguration.overflowModalColor,
-              /*shape: RoundedRectangleBorder(side: Bor,borderRadius: 24,)*/
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+        child: LimitedBox(
+          maxHeight: maxHeight,   // ✅ caps the sheet height
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              decoration: BoxDecoration(
+                color: betterPlayerControlsConfiguration.overflowModalColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24.0),
+                  topRight: Radius.circular(24.0),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,  // ✅ don't expand unnecessarily
+                children: children,
+              ),
             ),
-            child: Column(children: children),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   void _showMaterialBottomSheet(List<Widget> children) {
     showModalBottomSheet<void>(
