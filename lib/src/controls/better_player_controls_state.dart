@@ -277,7 +277,7 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget> extends State
     final int height = track.height ?? 0;
     final int bitrate = track.bitrate ?? 0;
     final String mimeType = (track.mimeType ?? '').replaceAll('video/', '');
-    final String trackName = preferredName ?? '${width}x$height ${BetterPlayerUtils.formatBitrate(bitrate)} $mimeType';
+    final String trackName = preferredName ?? '${height}p ${BetterPlayerUtils.formatBitrate(bitrate)}';
 
     final BetterPlayerAsmsTrack? selectedTrack = betterPlayerController!.betterPlayerAsmsTrack;
     final bool isSelected = selectedTrack != null && selectedTrack == track;
@@ -385,44 +385,62 @@ abstract class BetterPlayerControlsState<T extends StatefulWidget> extends State
     Platform.isAndroid ? _showMaterialBottomSheet(children) : _showCupertinoModalBottomSheet(children);
   }
 
-void _showCupertinoModalBottomSheet(List<Widget> children) {
-  showCupertinoModalPopup<void>(
-    barrierColor: Colors.transparent,
-    context: context,
-    useRootNavigator:
-        betterPlayerController?.betterPlayerConfiguration.useRootNavigator ??
-            false,
-    builder: (context) {
-      // ✅ Get the shortest side — works correctly in landscape on iOS
-      final double maxHeight =
-          MediaQuery.of(context).size.shortestSide * 0.85;
+  void _showCupertinoModalBottomSheet(List<Widget> children) {
+    showCupertinoModalPopup<void>(
+      barrierColor: Colors.black54,
+      context: context,
+      useRootNavigator:
+      betterPlayerController?.betterPlayerConfiguration.useRootNavigator ??
+          false,
+      builder: (context) {
+        final size = MediaQuery.of(context).size;
+        // shortestSide = physical narrow dimension, correct in landscape
+        final double maxHeight = size.shortestSide * 0.75;
 
-      return SafeArea(
-        top: false,
-        child: LimitedBox(
-          maxHeight: maxHeight,   // ✅ caps the sheet height
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              decoration: BoxDecoration(
-                color: betterPlayerControlsConfiguration.overflowModalColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24.0),
-                  topRight: Radius.circular(24.0),
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: SafeArea(
+              top: false,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: betterPlayerControlsConfiguration.overflowModalColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24.0),
+                      topRight: Radius.circular(24.0),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // drag handle
+                        Container(
+                          width: 36,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white30,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        ...children,
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,  // ✅ don't expand unnecessarily
-                children: children,
               ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   void _showMaterialBottomSheet(List<Widget> children) {
     showModalBottomSheet<void>(
